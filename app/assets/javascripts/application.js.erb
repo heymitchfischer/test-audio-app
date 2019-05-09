@@ -1,0 +1,61 @@
+// This is a manifest file that'll be compiled into application.js, which will include all the files
+// listed below.
+//
+// Any JavaScript/Coffee file within this directory, lib/assets/javascripts, or any plugin's
+// vendor/assets/javascripts directory can be referenced here using a relative path.
+//
+// It's not advisable to add code directly here, but if you do, it'll appear at the bottom of the
+// compiled file. JavaScript code in this file should be added after the last require_* statement.
+//
+// Read Sprockets README (https://github.com/rails/sprockets#sprockets-directives) for details
+// about supported directives.
+//
+//= require rails-ujs
+//= require activestorage
+//= require jquery3
+//= require_tree .
+
+$(document).ready(function() {
+  var $record = $("#record");
+  var $stopRecord = $("#stop");
+  var $recordedAudio = $("#recordedAudio");
+
+  navigator.mediaDevices.getUserMedia({audio: true})
+  .then(stream => {handlerFunction(stream)});
+
+  <%= context1 = Chromaprint::Context.new(44100, 1)
+    fingerprint1 = context1.get_fingerprint(File.binread('B2.wav'))
+
+    context2     = Chromaprint::Context.new(44100, 1)
+    fingerprint2 = context2.get_fingerprint(File.binread('B2_copy.wav'))
+
+    puts fingerprint1.compare(fingerprint2) %>
+
+  function handlerFunction(stream) {
+    rec = new MediaRecorder(stream);
+    rec.ondataavailable = e => {
+      audioChunks.push(e.data);
+      if (rec.state === "inactive") {
+        var blob = new Blob(audioChunks, {type: 'audio/wav'});
+        $recordedAudio.prop("src", URL.createObjectURL(blob));
+        $recordedAudio.prop("controls", true);
+        $recordedAudio.prop("autoplay", true);
+      }
+    }
+  }
+
+  $record.on("click", function() {
+    console.log("I was clicked!");
+    $record.prop("disabled", true);
+    $stopRecord.prop("disabled", false);
+    audioChunks = [];
+    rec.start();
+  });
+
+  $stopRecord.on("click", function() {
+    console.log("I was clicked!");
+    $stopRecord.prop("disabled", true);
+    $record.prop("disabled", false);
+    rec.stop();
+  });
+});
